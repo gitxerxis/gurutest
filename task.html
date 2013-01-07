@@ -2,32 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Task 1.1</title>
+<title>Task 1.2</title>
 </head>
 <body>
 
 Please see console for the the result;
 <script>
 	
-	var rangeStart = prompt('Please type in range Start :',12);
-	var rangeEnd = prompt('Please type in range End :' , 16);
+	var rangeStart = prompt('Please type in range Start :',4);
+	var rangeEnd = prompt('Please type in range End :' , 11);
 	
 	console.log('Range Start : ' + rangeStart);
 	console.log('Range End : ' + rangeEnd);
 	
 	
-	for(var i=rangeStart; i<=rangeEnd; i++) {
+	for(var i=parseInt(rangeStart) ; i<=parseInt(rangeEnd); i++) {
 		
 		//check for multiple of 3 = Fizz
-		if ( i % 3 === 0 )  console.log( 'Fizz' );
+		if ( i % 3 === 0 ) { console.log( 'Fizz (' + i + ')' ); }
 		
 		//check if mulitple of 5 = Buzz
-		if ( i % 5 === 0 )   console.log('Buzz'); 
+		else if ( i % 5 === 0 )  {  console.log('Buzz (' + i  + ')'   );  }
 		
-		//else show integer
-		if (  ( i % 5 !== 0 ) &&  ( i % 3 !== 0 ) )  console.log(  i  ); 
+		else if ( i % 2 === 0 ) {  console.log( i  );  }
 		
-	
+		else if (  ( i % 5 !== 0 ) ||  ( i % 3 !== 0 ) ) {  console.log( 'Bazz (' + i + ')'  );  }
+		
 	}
 	
 

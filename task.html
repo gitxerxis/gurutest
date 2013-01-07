@@ -18,15 +18,14 @@ Please see console for the the result;
 	
 	for(var i=rangeStart; i<=rangeEnd; i++) {
 		
-				
 		//check for multiple of 3 = Fizz
 		if ( i % 3 === 0 )  console.log( 'Fizz' );
 		
 		//check if mulitple of 5 = Buzz
-		if ( i % 5 === 0 ) {  console.log('Buzz'); }
+		if ( i % 5 === 0 )   console.log('Buzz'); 
 		
 		//else show integer
-		 else { console.log(i); }
+		if (  ( i % 5 !== 0 ) &&  ( i % 3 !== 0 ) )  console.log(  i  ); 
 		
 	
 	}

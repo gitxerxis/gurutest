@@ -31,22 +31,21 @@ test.html:
 <HTML xmlns:fb="http://www.facebook.com/2008/fbml">
 <HEAD>
 <SCRIPT SRC="http://code.jquery.com/jquery-1.7.2.js"></SCRIPT>
-<script>
-<!--//
-Get the data using ajax
-//-->
-$.get(
-    "/getinfo/111", {},
-    function(data) { $('.InfoDiv').html(data); }
-);
-</script>
+
 </HEAD>
 <BODY>
+<DIV ID="fb-root"></DIV>
 <H1><FONT FACE="verdana" COLOR="green">Welcome</FONT></H1>
 <CENTER><DIV CLASS="InfoDiv"></DIV></CENTER>
+<script type="text/javascript">
+$(function() { //do it on DOM Ready (1)
+	<!--//
+	Get the data using ajax
+	//-->
+	$.getJSON("/getinfo/111", {}, function(data) { $('.InfoDiv').html(data); }); // Suggest to user $.getJSON instead (5)
+});
+</script>
 </BODY>
-<DIV ID="fb-root"></DIV>
-<SCRIPT></SCRIPT>
 </HTML>
 
 getinfo.php:
@@ -54,11 +53,11 @@ getinfo.php:
 <?php
 require_once("data.php");
 
-$ArrayURL = split('/', $_SERVER[REQUEST_URI]));
+$ArrayURL = split('/', $_SERVER['REQUEST_URI'] );  //Fix syntax error (2)
 $id = $ArrayURL[1];
-$data = new dataObj();
+$data = new baseObj(); //Fix Invalid  Class Name (3)
 
-if (is_object($data) = true) $status = '200 OK';
+if (is_object($data) === true) $status = '200 OK'; // Fix conditional operator (4 )
 $status_header = 'HTTP/1.1 $status';
 
 header($status_header);
@@ -72,7 +71,7 @@ data.php:
 
 class baseObj {
     public $mysql = null;
-    private $table = null;
+    private  $table = null;
 
     public function __construct ()
     {
@@ -84,14 +83,22 @@ class baseObj {
 
     public function get ($id, $field)
     {
+		$table = $this->table;
         return $this->mysql->query("SELECT $field FROM $table WHERE ID = $id");
     }
 
     public function getAll ($id)
     {
+		$table = $this->table;
         $res = $this->mysql->query("SELECT * FROM $table WHERE ID = $id");
         return $res->fetch_assoc();
     }
+	
+	//handy table setter
+	public function setTable( $tableName ) {
+		$this->table = $tableName;
+	}
+	
 }
 
 class propertyData extends baseObj {
@@ -105,32 +112,43 @@ class propertyData extends baseObj {
     protected $hdbblock = null;
     private $swimmingPool = null;
 
-    private $table = 'Property';
+	//Handy table setter
+	public function setTable( $tableName ) { parent::$table = $tableName; }
+	
+    public function getType ($ID) { $this->setTable( 'Property' ); $this->type = $this->get( $ID, 'Type'); return $this->type; }
+    public function getTitle ($ID) { $this->setTable( 'Property' );  $this->title = $this->get( $ID, 'Title') ; return $this->title;}
+    public function getAddress ($ID) { $this->setTable( 'Property' );  $this->address = $this->get( $ID, 'Address') ; return $this->address;}
+    public function getBedroom ($ID) {  $this->setTable( 'Property' );  $this->bedroom = $this->get( $ID, 'Bedroom') ; return $this->bedroom;}
+    public function getLivingroom ($ID) {  $this->setTable( 'Property' );  $this->livingroom = $this->get( $ID, 'Living_room') ; return $this->livingroom;}
+    public function getDiningroom ($ID) { $this->setTable( 'Property' );  $this->diningroom = $this->get( $ID, 'Diningroom') ; return $this->diningroom;}
+	
+	//Added
+	public function getHdbBlock ($ID) { $this->setTable( 'HDB' );  $this->hdbblock = $this->get( $ID, 'HDBBlock') ; return $this->hdbblock; }
+	public function getSwimmingPool ($ID) { $this->setTable( 'Condo' );  $this->swimmingPool = $this->get( $ID, 'SwimmingPool') ; return $this->swimmingPool;}	
+	
 
-    public function getType ($ID) { $Type = $this->get( $ID, 'Type'); return $Type; }
-    public function getTitle ($ID) { $Title = $this->get( $ID, 'Title') ; return $Type;}
-    public function getAddress ($ID) { $Address = $this->get( $ID, 'Address') ; return $Address;}
-    public function getBedroom ($ID) { $Bedroom = $this->get( $ID, 'Bedroom') ; return $Bedroom;}
-    public function getLivingroom ($ID) { $livingroom = $this->get( $ID, 'Living_room') ; return $livingroom;}
-    public function getDiningroom ($ID) { $diningroom = $this->get( $ID, 'Diningroom') ; return $diningroom;}
+
+	
 }
 
 class hdbData extends propertyData {
-    private $table = 'HDB';
-    public function getHDBBlock ($ID) { $this->hdbblock = $this->get($ID, 'HDBBlock'); return $this->hdbblock; }
+    public function getHDBBlock ($ID) {  
+		return $this->getHdbBlock( $ID );
+	}
 }
 
 class condoData extends propertyData {
-    private $table = 'ConDO';
     public function gotSwimmingPool ($ID)
     {
-        return $this->get($ID, 'SwimmingPool');
+        return $this->getSwimmingPool($ID);
     }
 }
 
 ?>
 
 data.sql:
+
+DROP TABLE IF EXISTS Property; /* Suggest to have this to make your script re-usable, for such cases as reset (9)  */
 CREATE TABLE Property (
     ID BIGINT AUTO_INCREMENT PRIMARY KEY,
     Type TINYINT default 1,
@@ -140,8 +158,9 @@ CREATE TABLE Property (
     Living_room INT default 0,
     Diningroom INT default 0,
     Size Decimal(6,2) default 0.0
-) ENGINE=MyISAM;
+) ENGINE=InnoDB; /* Change this to InnoDB, to FIX (err: 150 )   (6)  */ 
 
+DROP TABLE IF EXISTS HDB;
 CREATE TABLE HDB (
     ID BIGINT AUTO_INCREMENT PRIMARY KEY,
     PID BIGINT NOT NULL,
@@ -150,11 +169,12 @@ CREATE TABLE HDB (
     FOREIGN KEY (PID) REFERENCES Property(ID)
 ) ENGINE=InnoDB;
 
+
+DROP TABLE IF EXISTS Condo;
 CREATE TABLE Condo (
-    ID BIGINT AUTO_INCREMENT,
-    PID INT NOT NULL,
+    ID BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,  /* An auto column must be a key  (8) */
+    PID BIGINT NOT NULL, /* PID must be of same type as PK  (7) */
     SwimmingPool TINYINT default 0,
     INDEX idx_PID (PID), 
     FOREIGN KEY (PID) REFERENCES Property(ID)
 ) ENGINE=InnoDB;
-
